@@ -1,0 +1,30 @@
+# --- 환경변수 파일 전체 ---
+.env
+*.env
+
+# --- tt 디렉토리 내부 특정 파일 제외하기 ---
+*/*/problem_1.py
+*/ans.py
+*/analysis_report.txt
+*/*/data.pkl
+
+# --- Python 기본 ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# --- VSCode ---
+.vscode/
+
+# --- macOS ---
+.DS_Store
+
+# --- Docker ---
+*.log
+
+# --- PDF 파일 ---
+*.pdf
+# --- docx 파일 ---
+*.docx
+*/*.docx
