@@ -1,0 +1,3 @@
+{"timestamp": "2025-12-03T16:15:01", "date": "2025-12-03", "meal_type": "breakfast", "total": {"calories": 174.13561847988075, "carbohydrate": 16.10122950819672, "protein": 10.34418777943368, "fat": 8.479545454545454, "sugar": 14.454582712369596, "sodium": 144.04619970193738}}
+{"timestamp": "2025-12-03T16:15:31", "date": "2025-12-03", "meal_type": "lunch", "total": {"calories": 1160.0, "carbohydrate": 110.0, "protein": 50.0, "fat": 60.0, "sugar": 30.0, "sodium": 2800.0}}
+{"timestamp": "2025-12-03T16:15:53", "date": "2025-12-03", "meal_type": "dinner", "total": {"calories": 351.01475917852827, "carbohydrate": 70.2367193655129, "protein": 9.233730763170335, "fat": 2.8358474709806187, "sugar": 1.8801880350858764, "sodium": 1761.7120121855141}}
