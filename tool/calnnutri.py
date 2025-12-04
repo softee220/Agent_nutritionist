@@ -8,8 +8,24 @@ import base64
 import urllib.parse
 import requests
 from datetime import datetime
+from pathlib import Path
 from dotenv import load_dotenv
 from openai import OpenAI
+
+
+# --------------------------------------------------------------------------------
+# 0. 경로 헬퍼
+# --------------------------------------------------------------------------------
+
+def get_project_root() -> Path:
+    """프로젝트 루트 디렉토리 반환 (tool 폴더의 상위 디렉토리)"""
+    return Path(__file__).parent.parent
+
+
+def get_log_path(filename: str) -> str:
+    """log 폴더 내 파일의 절대 경로 반환"""
+    return str(get_project_root() / "log" / filename)
+
 
 # --------------------------------------------------------------------------------
 # 1. 설정 및 초기화
@@ -283,17 +299,19 @@ def process_pipeline(food_list, api):
 # --------------------------------------------------------------------------------
 # 5. 외부에서 사용할 수 있는 함수 (모듈용)
 # --------------------------------------------------------------------------------
-def record_nutrition(user_input: str, log_path: str = "./log/nutrition.txt"):
+def record_nutrition(user_input: str, log_path: str = None):
     """
     사용자 입력을 받아 영양 정보를 계산하고 파일에 기록합니다.
 
     Args:
         user_input: 음식 설명 (예: "현미밥 200g이랑 닭가슴살 100g 먹었어")
-        log_path: 저장할 로그 파일 경로 (기본: ./log/nutrition.txt)
+        log_path: 저장할 로그 파일 경로 (기본: 프로젝트루트/log/nutrition.txt)
 
     Returns:
         dict: 총합 영양 정보 딕셔너리
     """
+    if log_path is None:
+        log_path = get_log_path("nutrition.txt")
     if not user_input.strip():
         print("입력된 내용이 없습니다.")
         return None

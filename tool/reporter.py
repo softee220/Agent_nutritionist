@@ -11,8 +11,18 @@ from openai import OpenAI
 
 
 # ============================================================
-# 0. 환경 설정
+# 0. 경로 헬퍼 & 환경 설정
 # ============================================================
+
+def get_project_root() -> Path:
+    """프로젝트 루트 디렉토리 반환 (tool 폴더의 상위 디렉토리)"""
+    return Path(__file__).parent.parent
+
+
+def get_log_path(filename: str) -> str:
+    """log 폴더 내 파일의 절대 경로 반환"""
+    return str(get_project_root() / "log" / filename)
+
 
 load_dotenv()
 # OPENAI_API_KEY는 .env에 있다고 가정 (os.environ에서 자동으로 읽음)
@@ -507,11 +517,17 @@ def build_weekly_coach_message_llm(
 # ============================================================
 
 def run_daily_coach(
-    nutrition_path: str = "./log/nutrition.txt",
-    private_path: str = "./log/private.json",
-    target_path: str = "./log/target_macros.json",
+    nutrition_path: str = None,
+    private_path: str = None,
+    target_path: str = None,
     date: Optional[str] = None,
 ) -> str:
+    if nutrition_path is None:
+        nutrition_path = get_log_path("nutrition.txt")
+    if private_path is None:
+        private_path = get_log_path("private.json")
+    if target_path is None:
+        target_path = get_log_path("target_macros.json")
     """
     nutrition, private, target_macros를 입력받아서
     특정 날짜(기본: 가장 최근 날짜)의 일일 리포트 생성.
@@ -535,11 +551,17 @@ def run_daily_coach(
 
 
 def run_weekly_coach(
-    nutrition_path: str = "./log/nutrition.txt",
-    private_path: str = "./log/private.json",
-    target_path: str = "./log/target_macros.json",
+    nutrition_path: str = None,
+    private_path: str = None,
+    target_path: str = None,
     end_date: Optional[str] = None,
 ) -> str:
+    if nutrition_path is None:
+        nutrition_path = get_log_path("nutrition.txt")
+    if private_path is None:
+        private_path = get_log_path("private.json")
+    if target_path is None:
+        target_path = get_log_path("target_macros.json")
     """
     nutrition, private, target_macros를 입력받아서
     end_date 기준 최근 7일 주간 리포트 생성.

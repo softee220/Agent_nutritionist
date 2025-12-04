@@ -12,6 +12,20 @@ from openai import OpenAI
 
 
 # ----------------------------
+# 경로 헬퍼
+# ----------------------------
+
+def get_project_root() -> Path:
+    """프로젝트 루트 디렉토리 반환 (tool 폴더의 상위 디렉토리)"""
+    return Path(__file__).parent.parent
+
+
+def get_log_path(filename: str) -> str:
+    """log 폴더 내 파일의 절대 경로 반환"""
+    return str(get_project_root() / "log" / filename)
+
+
+# ----------------------------
 # 데이터 클래스
 # ----------------------------
 
@@ -60,7 +74,9 @@ class MacroDiff:
 # 파일 로딩
 # ----------------------------
 
-def load_user_profile(path: str = "./log/private.json") -> UserProfile:
+def load_user_profile(path: str = None) -> UserProfile:
+    if path is None:
+        path = get_log_path("private.json")
     p = Path(path)
     with p.open("r", encoding="utf-8") as f:
         data: Dict[str, Any] = json.load(f)
@@ -79,7 +95,9 @@ def load_user_profile(path: str = "./log/private.json") -> UserProfile:
     )
 
 
-def load_macro_targets(path: str = "./log/target_macros.json") -> MacroTargets:
+def load_macro_targets(path: str = None) -> MacroTargets:
+    if path is None:
+        path = get_log_path("target_macros.json")
     p = Path(path)
     with p.open("r", encoding="utf-8") as f:
         data: Dict[str, Any] = json.load(f)
@@ -106,8 +124,10 @@ FAT_PATTERN = re.compile(r"지방\s*:\s*([\d\.]+)")
 DATE_PATTERN = re.compile(r"\[(\d{4}-\d{2}-\d{2})\s+[\d:]+\]")
 
 
-def parse_nutrition_log(path: str = "./log/nutrition.txt",
+def parse_nutrition_log(path: str = None,
                         date: Optional[str] = None) -> DailyIntake:
+    if path is None:
+        path = get_log_path("nutrition.txt")
     """
     nutrition.txt에서 특정 날짜(YYYY-MM-DD)의 총 섭취량을 합산.
     date=None이면 전체 합산.
@@ -296,10 +316,16 @@ def recommend_meal_with_tavily(
 
 def run_nutrition_agent(
     date: Optional[str] = None,
-    nutrition_path: str = "./log/nutrition.txt",
-    profile_path: str = "./log/private.json",
-    targets_path: str = "./log/target_macros.json",
+    nutrition_path: str = None,
+    profile_path: str = None,
+    targets_path: str = None,
 ) -> str:
+    if nutrition_path is None:
+        nutrition_path = get_log_path("nutrition.txt")
+    if profile_path is None:
+        profile_path = get_log_path("private.json")
+    if targets_path is None:
+        targets_path = get_log_path("target_macros.json")
     """
     date: "YYYY-MM-DD" 형식. None이면 전체 기록 기준.
     return: 추천 식단 텍스트

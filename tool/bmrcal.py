@@ -1,7 +1,22 @@
 import json
+import os
 from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Literal, Dict, Any
+
+
+# -----------------------------
+# 0. 경로 헬퍼
+# -----------------------------
+
+def get_project_root() -> Path:
+    """프로젝트 루트 디렉토리 반환 (tool 폴더의 상위 디렉토리)"""
+    return Path(__file__).parent.parent
+
+
+def get_log_path(filename: str) -> str:
+    """log 폴더 내 파일의 절대 경로 반환"""
+    return str(get_project_root() / "log" / filename)
 
 
 # -----------------------------
@@ -64,7 +79,9 @@ FAT_PER_KG_DEFAULT: float = 0.8
 # 3. 파일 로드/저장 함수
 # -----------------------------
 
-def load_user_profile(path: str = "./log/private.json") -> UserProfile:
+def load_user_profile(path: str = None) -> UserProfile:
+    if path is None:
+        path = get_log_path("private.json")
     p = Path(path)
     with p.open("r", encoding="utf-8") as f:
         data: Dict[str, Any] = json.load(f)
@@ -166,7 +183,7 @@ def calculate_macros(profile: UserProfile, target_kcal: float) -> MacroTargets:
 # -----------------------------
 
 def main():
-    profile = load_user_profile("./log/private.json")
+    profile = load_user_profile()
 
     bmr = calculate_bmr(profile)
     tdee = calculate_tdee(profile, bmr)
@@ -179,7 +196,7 @@ def main():
     print(macros)
 
     # 🔥 저장 기능 추가된 부분
-    save_macro_targets("./log/target_macros.json", macros)
+    save_macro_targets(get_log_path("target_macros.json"), macros)
 
 
 if __name__ == "__main__":
