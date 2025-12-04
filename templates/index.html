@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Nutritionist Agent</title>
+    
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Markdown Parser (marked.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <!-- Google Fonts (Noto Sans KR) -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons (Lucide) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #F5F5F7; /* 애플 스타일의 연한 회색 배경 */
+        }
+        /* 스크롤바 커스텀 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #D1D5DB;
+            border-radius: 4px;
+        }
+        .markdown-body ul {
+            list-style-type: disc;
+            padding-left: 1.5rem;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .markdown-body ol {
+            list-style-type: decimal;
+            padding-left: 1.5rem;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .markdown-body strong {
+            font-weight: 700;
+            color: #1F2937;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- 메인 컨테이너 -->
+    <div class="w-full max-w-3xl flex flex-col h-full max-h-[90vh]">
+        
+        <!-- 채팅 영역 (스크롤 가능) -->
+        <div id="chat-container" class="flex-1 overflow-y-auto space-y-6 pb-6 px-2">
+            
+            <!-- 초기 환영 메시지 -->
+            <div class="flex items-start gap-4">
+                <div class="flex-shrink-0 w-8 h-8 bg-black text-white rounded-full flex items-center justify-center">
+                    <i data-lucide="sprout" class="w-5 h-5"></i>
+                </div>
+                <div class="flex flex-col gap-1 max-w-[90%] text-gray-800 leading-relaxed">
+                    <p class="font-medium text-lg">안녕하세요! AI 영양사입니다.</p>
+                    <p>식사 기록, 칼로리 계산, 식단 추천 등을 도와드릴게요. 무엇을 드셨나요?</p>
+                </div>
+            </div>
+
+            <!-- 메시지들이 여기에 추가됨 -->
+            
+        </div>
+
+        <!-- 하단 입력 영역 -->
+        <div class="mt-4 w-full bg-white rounded-3xl shadow-sm border border-gray-200 p-2 flex items-center relative">
+            <input 
+                type="text" 
+                id="user-input" 
+                class="w-full bg-transparent border-none focus:ring-0 text-gray-700 placeholder-gray-400 px-4 py-3 text-base"
+                placeholder="What would you like to know?"
+                autocomplete="off"
+                onkeypress="handleKeyPress(event)"
+            >
+            <button 
+                onclick="sendMessage()" 
+                id="send-btn"
+                class="absolute right-3 p-2 bg-gray-200 hover:bg-gray-300 rounded-full transition-colors text-gray-500 hover:text-gray-700 disabled:opacity-50"
+            >
+                <i data-lucide="arrow-up" class="w-5 h-5"></i>
+            </button>
+        </div>
+        <div class="text-center text-xs text-gray-400 mt-2">
+            AI can make mistakes. Please check important info.
+        </div>
+    </div>
+
+    <script>
+        // 아이콘 초기화
+        lucide.createIcons();
+
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            // 1. 사용자 메시지 UI 추가 (우측 상단 스타일)
+            appendUserMessage(message);
+            userInput.value = '';
+            userInput.disabled = true;
+            sendBtn.disabled = true;
+
+            // 2. 로딩 표시 추가
+            const loadingId = appendLoadingMessage();
+
+            try {
+                // 3. 서버 요청
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: message }),
+                });
+
+                const data = await response.json();
+                
+                // 로딩 메시지 제거
+                removeMessage(loadingId);
+
+                if (data.error) {
+                    appendAgentMessage("오류가 발생했습니다: " + data.error);
+                } else {
+                    // 4. 에이전트 응답 UI 추가
+                    appendAgentMessage(data.response);
+                }
+
+            } catch (error) {
+                removeMessage(loadingId);
+                appendAgentMessage("서버 연결에 실패했습니다.");
+                console.error('Error:', error);
+            } finally {
+                userInput.disabled = false;
+                sendBtn.disabled = false;
+                userInput.focus();
+            }
+        }
+
+        function appendUserMessage(text) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = "flex justify-end mb-6";
+            msgDiv.innerHTML = `
+                <div class="bg-white border border-gray-200 text-gray-800 px-6 py-3 rounded-2xl shadow-sm max-w-[80%]">
+                    ${text}
+                </div>
+            `;
+            chatContainer.appendChild(msgDiv);
+            scrollToBottom();
+        }
+
+        function appendAgentMessage(text) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = "flex items-start gap-4 mb-6";
+            
+            // Markdown 파싱
+            const parsedContent = marked.parse(text);
+
+            msgDiv.innerHTML = `
+                <div class="flex-shrink-0 w-8 h-8 bg-black text-white rounded-md flex items-center justify-center mt-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5 10 10 0 0 0-10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/></svg>
+                </div>
+                <div class="flex flex-col gap-1 max-w-[90%] text-gray-800 leading-relaxed markdown-body">
+                    ${parsedContent}
+                </div>
+            `;
+            chatContainer.appendChild(msgDiv);
+            scrollToBottom();
+            
+            // 새로 추가된 아이콘 렌더링 (필요시)
+            lucide.createIcons(); 
+        }
+
+        function appendLoadingMessage() {
+            const id = 'loading-' + Date.now();
+            const msgDiv = document.createElement('div');
+            msgDiv.id = id;
+            msgDiv.className = "flex items-start gap-4 mb-6";
+            msgDiv.innerHTML = `
+                <div class="flex-shrink-0 w-8 h-8 bg-black text-white rounded-md flex items-center justify-center mt-1">
+                     <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+                <div class="flex items-center text-gray-500 text-sm mt-2">
+                    생각하는 중...
+                </div>
+            `;
+            chatContainer.appendChild(msgDiv);
+            scrollToBottom();
+            return id;
+        }
+
+        function removeMessage(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+
+        function scrollToBottom() {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    </script>
+</body>
+</html>
