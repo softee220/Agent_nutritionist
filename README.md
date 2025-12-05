@@ -1,6 +1,26 @@
 <img width="631" height="517" alt="image" src="https://github.com/user-attachments/assets/7b817aee-8bbf-4d9f-8959-f7e0194f4b7f" />
 
 
+
+
+<img width="1004" height="617" alt="image" src="https://github.com/user-attachments/assets/9cd87669-bdee-477e-98fc-f42bbc1fbad4" />
+
+
+<img width="2005" height="1244" alt="스크린샷 2025-12-05 225432" src="https://github.com/user-attachments/assets/5a596383-60be-46d5-808e-ae71dd5e5a67" />
+
+<img width="2133" height="1121" alt="스크린샷 2025-12-05 225422" src="https://github.com/user-attachments/assets/2f78f170-cb50-4ad1-8d12-cd391e11b9c3" />
+
+
+<img width="2131" height="1077" alt="스크린샷 2025-12-05 225413" src="https://github.com/user-attachments/assets/3b57a22d-495e-4ba1-bd3c-3dda8af8de51" />
+
+
+<img width="2142" height="984" alt="스크린샷 2025-12-05 225355" src="https://github.com/user-attachments/assets/8e350324-099f-420c-9bb7-74c361a2919e" />
+
+
+<img width="1988" height="923" alt="스크린샷 2025-12-05 225343" src="https://github.com/user-attachments/assets/3873c1ff-638d-40f0-864c-3f612422701a" />
+
+
+
 🥗 AI Nutritionist Agent System
 
 사용자의 식단 기록을 자동으로 분석하고, 영양소 계산·식단 추천·일일/주간 리포트를 생성하는 LLM 기반 영양 관리 에이전트 시스템입니다.
@@ -144,20 +164,3 @@ python app.py
 
 python tool/reporter.py daily
 python tool/reporter.py weekly
-
-<img width="1004" height="617" alt="image" src="https://github.com/user-attachments/assets/9cd87669-bdee-477e-98fc-f42bbc1fbad4" />
-
-
-<img width="2005" height="1244" alt="스크린샷 2025-12-05 225432" src="https://github.com/user-attachments/assets/5a596383-60be-46d5-808e-ae71dd5e5a67" />
-
-<img width="2133" height="1121" alt="스크린샷 2025-12-05 225422" src="https://github.com/user-attachments/assets/2f78f170-cb50-4ad1-8d12-cd391e11b9c3" />
-
-
-<img width="2131" height="1077" alt="스크린샷 2025-12-05 225413" src="https://github.com/user-attachments/assets/3b57a22d-495e-4ba1-bd3c-3dda8af8de51" />
-
-
-<img width="2142" height="984" alt="스크린샷 2025-12-05 225355" src="https://github.com/user-attachments/assets/8e350324-099f-420c-9bb7-74c361a2919e" />
-
-
-<img width="1988" height="923" alt="스크린샷 2025-12-05 225343" src="https://github.com/user-attachments/assets/3873c1ff-638d-40f0-864c-3f612422701a" />
-
