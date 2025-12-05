@@ -145,6 +145,7 @@ python app.py
 python tool/reporter.py daily
 python tool/reporter.py weekly
 
+<img width="1004" height="617" alt="image" src="https://github.com/user-attachments/assets/9cd87669-bdee-477e-98fc-f42bbc1fbad4" />
 
 
 <img width="2005" height="1244" alt="스크린샷 2025-12-05 225432" src="https://github.com/user-attachments/assets/5a596383-60be-46d5-808e-ae71dd5e5a67" />
