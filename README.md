@@ -107,13 +107,11 @@ JSON 포맷이므로 다른 시스템과 연동하기 쉬움
 “이번 주 리포트 만들어줘” → reporter.weekly
 
 모듈형 아키텍처로 기능 확장성이 매우 높음.
-
+```
 
 ---
 
 ## 📁 프로젝트 구조
-
-```bash
 project_root/
   tool/
     bmrcal.py          # BMR 및 목표 칼로리 계산
@@ -130,7 +128,7 @@ project_root/
 
   main.py               # REAct 기반 통합 에이전트
   README.md             # 프로젝트 설명 문서
-```
+
 
 
 
