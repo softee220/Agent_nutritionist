@@ -183,6 +183,8 @@ python app.py
 
 
 .env : openai API, Fatsecret API
+
+
 환경변수 : Tavily API
 ---
 
