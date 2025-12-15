@@ -1,0 +1,12 @@
+{
+  "age": 27,
+  "sex": "male",
+  "height_cm": 178,
+  "weight_kg": 70,
+  "activity_level": "light",
+  "goal": "weight_loss",
+  "exercise_level": "mid",
+  "body_fat": 18,
+  "diet_preference": "korean",
+  "health_condition": null
+}

@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Nutritionist Dashboard</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Markdown Parser -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #F9FAFB; } /* 더 밝은 배경 */
+        
+        /* 스크롤바 커스텀 */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 4px; }
+        
+        /* 마크다운 스타일 */
+        .markdown-body ul { list-style-type: disc; padding-left: 1.5rem; margin: 0.5rem 0; }
+        .markdown-body ol { list-style-type: decimal; padding-left: 1.5rem; margin: 0.5rem 0; }
+        .markdown-body strong { font-weight: 700; color: #111827; }
+        .markdown-body p { margin-bottom: 0.5rem; line-height: 1.6; }
+
+        /* 사이드바 메뉴 활성화 스타일 */
+        .menu-item.active {
+            background-color: #F3F4F6;
+            color: #111827;
+            font-weight: 600;
+        }
+
+        /* 커스텀 Select */
+        select.custom-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+        }
+
+        /* 도넛 차트 중앙 텍스트용 */
+        .chart-container {
+            position: relative;
+            height: 200px;
+            width: 200px;
+            margin: 0 auto;
+        }
+        .chart-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden text-gray-800">
+
+    <!-- 좌측 사이드바 -->
+    <aside class="w-64 bg-white border-r border-gray-100 flex flex-col flex-shrink-0 z-20">
+        <div class="p-8">
+            <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2 tracking-tight">
+                NutriAgent
+            </h1>
+        </div>
+        
+        <nav class="flex-1 px-4 space-y-1">
+            <button onclick="switchTab('chatbot')" id="btn-chatbot" class="menu-item w-full flex items-center gap-3 px-4 py-3 text-gray-500 rounded-lg hover:bg-gray-50 transition-colors text-left text-sm active">
+                <i data-lucide="message-square" class="w-5 h-5"></i>
+                Chatbot
+            </button>
+            <button onclick="switchTab('dashboard')" id="btn-dashboard" class="menu-item w-full flex items-center gap-3 px-4 py-3 text-gray-500 rounded-lg hover:bg-gray-50 transition-colors text-left text-sm">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                Dashboard
+            </button>
+            <button onclick="switchTab('information')" id="btn-information" class="menu-item w-full flex items-center gap-3 px-4 py-3 text-gray-500 rounded-lg hover:bg-gray-50 transition-colors text-left text-sm">
+                <i data-lucide="user" class="w-5 h-5"></i>
+                Information
+            </button>
+            <button onclick="switchTab('log')" id="btn-log" class="menu-item w-full flex items-center gap-3 px-4 py-3 text-gray-500 rounded-lg hover:bg-gray-50 transition-colors text-left text-sm">
+                <i data-lucide="file-text" class="w-5 h-5"></i>
+                Log
+            </button>
+        </nav>
+
+        <div class="p-6 border-t border-gray-100 text-xs text-gray-400">
+            v1.3.1 Report Modal Added
+        </div>
+    </aside>
+
+    <!-- 메인 컨텐츠 영역 -->
+    <main class="flex-1 relative flex flex-col h-full overflow-hidden bg-[#F9FAFB]">
+        
+        <!-- 1. Chatbot View -->
+        <div id="view-chatbot" class="content-view h-full flex flex-col relative w-full">
+            
+            <!-- 채팅 영역 (스크롤) -->
+            <div id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 pb-32 max-w-5xl mx-auto w-full">
+                <!-- Welcome Message Card -->
+                <div class="bg-white border border-green-100 rounded-xl p-6 shadow-sm flex items-start gap-4 mb-8">
+                    <div class="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="sprout" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-emerald-700 font-bold text-lg mb-1">안녕하세요! AI 영양사입니다.</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed">
+                            식사 기록, 칼로리 계산, 식단 추천, 리포트까지 모두 도와드릴게요.<br>
+                            예: "아침에 뭐 먹었는지 기록해줘", "오늘 저녁 뭐 먹으면 좋을까?", "이번 주 리포트 보여줘"
+                        </p>
+                        <p class="text-xs text-gray-400 mt-3">지금 바로 질문해 보세요!</p>
+                    </div>
+                </div>
+
+                <!-- 메시지들이 여기에 추가됨 -->
+            </div>
+            
+            <!-- 하단 입력 영역 (Fixed Bottom) -->
+            <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-[#F9FAFB] via-[#F9FAFB] to-transparent">
+                <div class="max-w-5xl mx-auto w-full bg-white rounded-full shadow-lg border border-gray-200 p-2 flex items-center relative">
+                    <input 
+                        type="text" 
+                        id="user-input" 
+                        class="w-full bg-transparent border-none focus:ring-0 text-gray-700 px-6 py-3 text-base placeholder-gray-400" 
+                        placeholder="무엇을 도와드릴까요?" 
+                        autocomplete="off"
+                        onkeypress="handleKeyPress(event)"
+                    >
+                    <button 
+                        onclick="sendMessage()" 
+                        id="send-btn" 
+                        class="p-3 bg-emerald-500 hover:bg-emerald-600 rounded-full transition-colors text-white shadow-md flex-shrink-0 mr-1"
+                    >
+                        <i data-lucide="arrow-up" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <div class="text-center text-xs text-gray-400 mt-2 mb-2">
+                    AI는 가끔 실수할 수 있어요. 중요한 정보는 꼭 다시 확인해 주세요.
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Dashboard View -->
+        <div id="view-dashboard" class="content-view hidden h-full overflow-y-auto p-6 md:p-10 w-full max-w-7xl mx-auto">
+            <h2 class="text-3xl font-bold mb-2 text-gray-900">Dashboard</h2>
+            <p class="text-gray-500 mb-8">오늘과 이번 주의 영양 요약을 한눈에 확인해 보세요.</p>
+            
+            <!-- Top Row: Daily Summary -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                
+                <!-- Card 1: Daily Intake (Donut Chart) -->
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center relative min-h-[300px]">
+                    <div class="absolute top-6 left-6 flex items-center gap-2">
+                        <span class="bg-orange-100 text-orange-600 p-1.5 rounded-lg"><i data-lucide="flame" class="w-4 h-4"></i></span>
+                        <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Daily</span>
+                    </div>
+                    <h3 class="absolute top-6 left-16 text-lg font-bold text-gray-800 ml-2">Today's Intake</h3>
+
+                    <div class="chart-container mt-4">
+                        <canvas id="dailyCalorieChart"></canvas>
+                        <div class="chart-text">
+                            <div class="text-3xl font-bold text-gray-900" id="dash-cal-val-big">0</div>
+                            <div class="text-xs text-gray-400 mt-1">/ <span id="dash-cal-target-big">0</span> kcal</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Macros (Progress Bars) -->
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 min-h-[300px] flex flex-col justify-center">
+                    <div class="flex justify-between items-start mb-8">
+                        <div class="flex items-center gap-2">
+                            <span class="bg-emerald-100 text-emerald-600 p-1.5 rounded-lg"><i data-lucide="activity" class="w-4 h-4"></i></span>
+                            <div>
+                                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block">Daily</span>
+                                <h3 class="text-lg font-bold text-gray-800">Macros</h3>
+                            </div>
+                        </div>
+                        <button onclick="openDailyReport()" class="text-xs bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-full font-medium hover:bg-emerald-100 transition-colors">
+                            일일 리포트 보기
+                        </button>
+                    </div>
+
+                    <div class="space-y-6">
+                        <!-- Carbs -->
+                        <div>
+                            <div class="flex justify-between text-sm mb-2 font-medium">
+                                <span class="text-gray-600">Carbohydrates</span>
+                                <span class="text-gray-900"><span id="dash-carb-val">0</span> / <span id="dash-carb-target" class="text-gray-400">0</span> g</span>
+                            </div>
+                            <div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                                <div id="dash-carb-bar" class="bg-blue-500 h-full rounded-full transition-all duration-1000" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <!-- Protein -->
+                        <div>
+                            <div class="flex justify-between text-sm mb-2 font-medium">
+                                <span class="text-gray-600">Protein</span>
+                                <span class="text-gray-900"><span id="dash-prot-val">0</span> / <span id="dash-prot-target" class="text-gray-400">0</span> g</span>
+                            </div>
+                            <div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                                <div id="dash-prot-bar" class="bg-purple-500 h-full rounded-full transition-all duration-1000" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <!-- Fat -->
+                        <div>
+                            <div class="flex justify-between text-sm mb-2 font-medium">
+                                <span class="text-gray-600">Fat</span>
+                                <span class="text-gray-900"><span id="dash-fat-val">0</span> / <span id="dash-fat-target" class="text-gray-400">0</span> g</span>
+                            </div>
+                            <div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                                <div id="dash-fat-bar" class="bg-amber-400 h-full rounded-full transition-all duration-1000" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Row: Weekly Trend -->
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                <div class="flex justify-between items-start mb-6">
+                    <div class="flex items-center gap-2">
+                        <span class="bg-green-100 text-green-600 p-1.5 rounded-lg"><i data-lucide="trending-up" class="w-4 h-4"></i></span>
+                        <div>
+                            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block">Weekly</span>
+                            <h3 class="text-lg font-bold text-gray-800">Weekly Calories</h3>
+                        </div>
+                    </div>
+                    <button onclick="openWeeklyReport()" class="text-xs bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-full font-medium hover:bg-indigo-100 transition-colors">
+                        주간 리포트 보기
+                    </button>
+                </div>
+                <div class="h-64 w-full">
+                    <canvas id="weeklyChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="h-10"></div> <!-- Spacer -->
+        </div>
+
+        <!-- 3. Information View -->
+        <div id="view-information" class="content-view hidden h-full overflow-y-auto p-6 md:p-10 w-full max-w-4xl mx-auto">
+            <h2 class="text-2xl font-bold mb-6 text-gray-900">사용자 신체 정보</h2>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                <table class="w-full text-left border-collapse">
+                    <tbody id="info-table-body" class="divide-y divide-gray-100">
+                        <!-- JS로 데이터 주입 -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="save-indicator" class="mt-4 text-center text-emerald-600 text-sm font-medium opacity-0 transition-opacity">
+                <i data-lucide="check" class="w-4 h-4 inline mr-1"></i> 저장되었습니다.
+            </div>
+        </div>
+
+        <!-- 4. Log View -->
+        <div id="view-log" class="content-view hidden h-full overflow-y-auto p-6 md:p-10 w-full max-w-5xl mx-auto">
+            <h2 class="text-2xl font-bold mb-6 text-gray-900">영양 섭취 로그</h2>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 font-mono text-sm text-gray-600 whitespace-pre-wrap leading-relaxed" id="log-content">
+                데이터를 불러오는 중...
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Report Modal -->
+    <div id="report-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 md:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto relative shadow-2xl animate-fade-in">
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+            <h3 id="modal-title" class="text-2xl font-bold mb-6 text-gray-900 flex items-center gap-2">
+                <!-- Title Injected via JS -->
+            </h3>
+            
+            <!-- Nutrient Summary Section -->
+            <div class="bg-gray-50 rounded-xl p-5 mb-8 border border-gray-100">
+                <h4 class="font-bold text-gray-500 mb-4 text-xs uppercase tracking-wider flex items-center gap-1">
+                    <i data-lucide="pie-chart" class="w-3 h-3"></i> Total Intake / Target
+                </h4>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                    <div>
+                        <div class="text-xs text-gray-500 mb-1">Calories</div>
+                        <div class="font-bold text-gray-800 text-lg"><span id="modal-cal">0</span> <span class="text-xs font-normal text-gray-400">kcal</span></div>
+                        <div class="text-xs text-gray-400 mt-1">/ <span id="modal-cal-target">0</span></div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-gray-500 mb-1">Carbs</div>
+                        <div class="font-bold text-blue-600 text-lg"><span id="modal-carb">0</span> <span class="text-xs font-normal text-gray-400">g</span></div>
+                        <div class="text-xs text-gray-400 mt-1">/ <span id="modal-carb-target">0</span></div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-gray-500 mb-1">Protein</div>
+                        <div class="font-bold text-purple-600 text-lg"><span id="modal-prot">0</span> <span class="text-xs font-normal text-gray-400">g</span></div>
+                        <div class="text-xs text-gray-400 mt-1">/ <span id="modal-prot-target">0</span></div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-gray-500 mb-1">Fat</div>
+                        <div class="font-bold text-amber-500 text-lg"><span id="modal-fat">0</span> <span class="text-xs font-normal text-gray-400">g</span></div>
+                        <div class="text-xs text-gray-400 mt-1">/ <span id="modal-fat-target">0</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report Text Content -->
+            <div id="modal-content" class="space-y-6">
+                <!-- Dynamic Content Injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // --- 전역 변수 ---
+        let weeklyChartInstance = null;
+        let dailyDonutChartInstance = null;
+        let dashboardData = {}; // Fetched Data Storage
+
+        // --- 탭 전환 로직 ---
+        function switchTab(tabName) {
+            document.querySelectorAll('.content-view').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`view-${tabName}`).classList.remove('hidden');
+            
+            document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`btn-${tabName}`).classList.add('active');
+
+            if (tabName === 'dashboard') loadDashboard();
+            if (tabName === 'information') loadInformation();
+            if (tabName === 'log') loadLog();
+        }
+
+        // --- Dashboard Logic ---
+        async function loadDashboard() {
+            try {
+                const res = await fetch('/api/dashboard');
+                dashboardData = await res.json(); // Store data globally
+                const data = dashboardData;
+                
+                const dSum = data.daily?.summary?.total || {};
+                const dTarget = data.daily?.summary?.target || {};
+                
+                // 1. Daily Macros
+                updateMacroBar('dash-carb', dSum.carbohydrate, dTarget.carbohydrate);
+                updateMacroBar('dash-prot', dSum.protein, dTarget.protein);
+                updateMacroBar('dash-fat', dSum.fat, dTarget.fat);
+
+                // 2. Daily Calories
+                renderDailyDonut(dSum.calories, dTarget.calories);
+
+                // 3. Weekly Chart
+                const days = data.weekly?.summary?.days || [];
+                const labels = days.map(d => d.date.slice(5)); // 'MM-DD' format
+                const values = days.map(d => d.calories);
+                
+                renderWeeklyChart(labels, values);
+
+            } catch (e) {
+                console.error("Dashboard load error", e);
+            }
+        }
+
+        function updateMacroBar(idPrefix, current, target) {
+            const curVal = parseFloat(current || 0).toFixed(0);
+            const tarVal = parseFloat(target || 1).toFixed(0);
+            const percent = Math.min((curVal / tarVal) * 100, 100);
+            
+            document.getElementById(`${idPrefix}-val`).innerText = curVal;
+            document.getElementById(`${idPrefix}-target`).innerText = tarVal;
+            document.getElementById(`${idPrefix}-bar`).style.width = `${percent}%`;
+        }
+
+        function renderDailyDonut(current, target) {
+            const ctx = document.getElementById('dailyCalorieChart').getContext('2d');
+            const curVal = parseFloat(current || 0).toFixed(0);
+            const tarVal = parseFloat(target || 2000).toFixed(0);
+            const remaining = Math.max(0, tarVal - curVal);
+
+            document.getElementById('dash-cal-val-big').innerText = curVal;
+            document.getElementById('dash-cal-target-big').innerText = tarVal;
+
+            if (dailyDonutChartInstance) dailyDonutChartInstance.destroy();
+
+            dailyDonutChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Intake', 'Remaining'],
+                    datasets: [{
+                        data: [curVal, remaining],
+                        backgroundColor: ['#10B981', '#E5E7EB'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    cutout: '85%',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                    animation: { animateScale: true, animateRotate: true }
+                }
+            });
+        }
+
+        function renderWeeklyChart(labels, dataPoints) {
+            const ctx = document.getElementById('weeklyChart').getContext('2d');
+            if (weeklyChartInstance) weeklyChartInstance.destroy();
+
+            weeklyChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Calories',
+                        data: dataPoints,
+                        backgroundColor: '#10B981',
+                        borderRadius: 4,
+                        barThickness: 20,
+                        maxBarThickness: 30
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#F3F4F6', drawBorder: false }, ticks: { font: { size: 10 }, color: '#9CA3AF' } },
+                        x: { grid: { display: false, drawBorder: false }, ticks: { font: { size: 10 }, color: '#9CA3AF' } }
+                    }
+                }
+            });
+        }
+
+        // --- Modal Logic ---
+
+        function openDailyReport() {
+            if (!dashboardData.daily || !dashboardData.daily.report) {
+                alert("일일 리포트 데이터가 없습니다.");
+                return;
+            }
+            
+            const report = dashboardData.daily.report;
+            const summary = dashboardData.daily.summary.total;
+            const target = dashboardData.daily.summary.target;
+
+            // 1. Title
+            document.getElementById('modal-title').innerHTML = `<i data-lucide="file-text" class="text-emerald-500"></i> Daily Report`;
+            
+            // 2. Nutrients
+            setModalNutrients(summary, target);
+
+            // 3. Content
+            const contentDiv = document.getElementById('modal-content');
+            contentDiv.innerHTML = `
+                ${createReportSection('평가', report['평가'], 'text-gray-800')}
+                ${createReportSection('문제점', report['문제'], 'text-red-600')}
+                ${createReportSection('차후 전략', report['차후전략'], 'text-blue-600')}
+            `;
+
+            openModal();
+        }
+
+        function openWeeklyReport() {
+            if (!dashboardData.weekly || !dashboardData.weekly.report) {
+                alert("주간 리포트 데이터가 없습니다.");
+                return;
+            }
+
+            const report = dashboardData.weekly.report;
+            const summary = dashboardData.weekly.summary.total;
+            // Weekly Target Calculation: Daily Target * Num Days
+            const dailyTarget = dashboardData.daily?.summary?.target || { calories: 2000, carbohydrate: 300, protein: 100, fat: 60 };
+            const numDays = dashboardData.weekly.summary.num_days || 1;
+            
+            const weeklyTarget = {
+                calories: dailyTarget.calories * numDays,
+                carbohydrate: dailyTarget.carbohydrate * numDays,
+                protein: dailyTarget.protein * numDays,
+                fat: dailyTarget.fat * numDays
+            };
+
+            // 1. Title
+            document.getElementById('modal-title').innerHTML = `<i data-lucide="bar-chart-2" class="text-indigo-500"></i> Weekly Report (${numDays} Days)`;
+
+            // 2. Nutrients
+            setModalNutrients(summary, weeklyTarget);
+
+            // 3. Content
+            const contentDiv = document.getElementById('modal-content');
+            contentDiv.innerHTML = `
+                ${createReportSection('평가', report['평가'], 'text-gray-800')}
+                ${createReportSection('긍정적인 점', report['긍정'], 'text-green-600')}
+                ${createReportSection('문제점', report['문제'], 'text-red-600')}
+                ${createReportSection('차후 전략', report['차후전략'], 'text-blue-600')}
+            `;
+
+            openModal();
+        }
+
+        function setModalNutrients(intake, target) {
+            document.getElementById('modal-cal').innerText = parseFloat(intake.calories).toFixed(0);
+            document.getElementById('modal-cal-target').innerText = parseFloat(target.calories).toFixed(0);
+            
+            document.getElementById('modal-carb').innerText = parseFloat(intake.carbohydrate).toFixed(0);
+            document.getElementById('modal-carb-target').innerText = parseFloat(target.carbohydrate).toFixed(0);
+            
+            document.getElementById('modal-prot').innerText = parseFloat(intake.protein).toFixed(0);
+            document.getElementById('modal-prot-target').innerText = parseFloat(target.protein).toFixed(0);
+            
+            document.getElementById('modal-fat').innerText = parseFloat(intake.fat).toFixed(0);
+            document.getElementById('modal-fat-target').innerText = parseFloat(target.fat).toFixed(0);
+        }
+
+        function createReportSection(title, content, colorClass) {
+            if (!content) return '';
+            return `
+                <div class="border-l-4 ${colorClass.includes('red') ? 'border-red-400' : colorClass.includes('green') ? 'border-green-400' : colorClass.includes('blue') ? 'border-blue-400' : 'border-gray-300'} pl-4">
+                    <h4 class="font-bold text-lg mb-2 ${colorClass}">${title}</h4>
+                    <p class="text-gray-600 leading-relaxed text-sm whitespace-pre-wrap">${content}</p>
+                </div>
+            `;
+        }
+
+        function openModal() {
+            document.getElementById('report-modal').classList.remove('hidden');
+            lucide.createIcons(); // Refresh icons inside modal
+        }
+
+        function closeModal() {
+            document.getElementById('report-modal').classList.add('hidden');
+        }
+
+        // Close modal on outside click
+        document.getElementById('report-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+
+        // --- Information Logic (기존 유지) ---
+        const editableOptions = {
+            "sex": ["male", "female"],
+            "activity_level": ["sedentary", "light", "moderate", "active", "very_active"],
+            "goal": ["weight_loss", "maintenance", "weight_gain"],
+            "exercise_level": ["low", "mid", "high"]
+        };
+        const numberInputs = ["age", "height_cm", "weight_kg", "body_fat"];
+        const keyMap = {
+            "age": "나이", "sex": "성별", "height_cm": "키 (cm)", 
+            "weight_kg": "몸무게 (kg)", "activity_level": "활동량", 
+            "goal": "목표", "body_fat": "체지방률 (%)", "diet_preference": "선호 식단",
+            "exercise_level": "운동 강도"
+        };
+
+        async function loadInformation() {
+            try {
+                const res = await fetch('/api/info');
+                const data = await res.json();
+                const tableBody = document.getElementById('info-table-body');
+                tableBody.innerHTML = '';
+
+                for (const [key, value] of Object.entries(data)) {
+                    if (key === 'health_condition') continue;
+                    const label = keyMap[key] || key;
+                    let valueHtml = '';
+
+                    if (editableOptions[key]) {
+                        const options = editableOptions[key].map(opt => 
+                            `<option value="${opt}" ${opt === value ? 'selected' : ''}>${opt}</option>`
+                        ).join('');
+                        valueHtml = `<select onchange="updateInfo('${key}', this.value)" class="custom-select block w-full bg-gray-50 border border-gray-200 text-gray-900 py-2 px-3 pr-8 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors cursor-pointer text-sm font-medium">${options}</select>`;
+                    } else if (numberInputs.includes(key)) {
+                        valueHtml = `<input type="number" value="${value}" onchange="updateInfo('${key}', Number(this.value))" step="0.1" class="block w-full bg-gray-50 border border-gray-200 text-gray-900 py-2 px-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors text-sm font-medium">`;
+                    } else {
+                        valueHtml = `<span class="text-gray-900 font-semibold text-sm">${value}</span>`;
+                    }
+
+                    tableBody.innerHTML += `
+                        <tr class="group hover:bg-gray-50 transition-colors">
+                            <td class="p-4 text-gray-500 text-sm font-medium w-1/3 align-middle group-hover:text-emerald-600 transition-colors">${label}</td>
+                            <td class="p-4 align-middle">${valueHtml}</td>
+                        </tr>
+                    `;
+                }
+            } catch (e) { console.error("Info load error", e); }
+        }
+
+        async function updateInfo(key, newValue) {
+            try {
+                const indicator = document.getElementById('save-indicator');
+                indicator.style.opacity = '0';
+                await fetch('/api/info', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ [key]: newValue })
+                });
+                indicator.style.opacity = '1';
+                setTimeout(() => { indicator.style.opacity = '0'; }, 2000);
+            } catch (e) { alert("저장 실패"); }
+        }
+
+        async function loadLog() {
+            try {
+                const res = await fetch('/api/log');
+                const data = await res.json();
+                document.getElementById('log-content').innerText = data.content;
+            } catch (e) { console.error("Log load error", e); }
+        }
+
+
+        // --- Chatbot Logic ---
+        lucide.createIcons();
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('user-input');
+        
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') sendMessage();
+        }
+
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            appendUserMessage(message);
+            userInput.value = '';
+            userInput.disabled = true;
+            
+            const loadingId = appendLoadingMessage();
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ message: message }),
+                });
+                const data = await response.json();
+                removeMessage(loadingId);
+
+                if (data.error) appendAgentMessage("오류: " + data.error);
+                else appendAgentMessage(data.response);
+
+            } catch (error) {
+                removeMessage(loadingId);
+                appendAgentMessage("서버 연결 실패");
+            } finally {
+                userInput.disabled = false;
+                userInput.focus();
+            }
+        }
+
+        function appendUserMessage(text) {
+            const div = document.createElement('div');
+            div.className = "flex justify-end mb-6";
+            div.innerHTML = `
+                <div class="bg-white border border-gray-200 text-gray-800 px-6 py-3 rounded-2xl rounded-tr-none shadow-sm max-w-[85%] text-sm leading-relaxed">
+                    ${text}
+                </div>
+            `;
+            chatContainer.appendChild(div);
+            scrollToBottom();
+        }
+
+        function appendAgentMessage(text) {
+            const div = document.createElement('div');
+            div.className = "flex items-start gap-3 mb-6";
+            const parsed = marked.parse(text);
+            div.innerHTML = `
+                <div class="flex-shrink-0 w-8 h-8 bg-emerald-600 text-white rounded-full flex items-center justify-center mt-1 shadow-sm">
+                    <i data-lucide="sprout" class="w-4 h-4"></i>
+                </div>
+                <div class="flex flex-col gap-1 max-w-[90%] text-gray-800 leading-relaxed markdown-body text-sm">
+                    ${parsed}
+                </div>
+            `;
+            chatContainer.appendChild(div);
+            lucide.createIcons();
+            scrollToBottom();
+        }
+
+        function appendLoadingMessage() {
+            const id = 'loading-' + Date.now();
+            const div = document.createElement('div');
+            div.id = id;
+            div.className = "flex items-start gap-3 mb-6 opacity-60";
+            div.innerHTML = `
+                <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
+                </div>
+                <div class="text-sm text-gray-400 mt-1.5 font-medium">작성 중...</div>
+            `;
+            chatContainer.appendChild(div);
+            scrollToBottom();
+            return id;
+        }
+
+        function removeMessage(id) {
+            const el = document.getElementById(id);
+            if(el) el.remove();
+        }
+
+        function scrollToBottom() {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // 초기화
+        switchTab('chatbot'); 
+    </script>
+</body>
+</html>
